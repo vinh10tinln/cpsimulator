@@ -1,0 +1,4 @@
+Môi trường đang ngày càng trở nên ô nhiễm trầm trọng do sự gia tăng của các chất thải công nghiệp và sinh hoạt.
+Để bảo vệ sức khỏe cộng đồng, chúng ta cần phải có các biện pháp cụ thể nhằm tái chế lượng rác thải này một cách hiệu quả.
+Trí tuệ nhân tạo có thể hỗ trợ trong việc phân loại rác tự động bằng cách sử dụng các mô hình học máy tiên tiến.
+Điều này không chỉ giúp tiết kiệm sức người mà còn tăng cường độ chính xác khi thu hồi các loại vật liệu như nhựa hay kim loại.
