@@ -1,0 +1,12 @@
+Paracetamol
+MRI
+CT-Scan
+BHYT
+BS
+BN
+BSCKII
+ICD-10
+HSBA
+EKG
+ECG
+X-Quang

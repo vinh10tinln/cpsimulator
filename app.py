@@ -1,8 +1,23 @@
+import os
 import streamlit as st
 import pandas as pd
 from utils.file_loader import load_file
 from utils.preprocess import split_sentences
 from utils.similarity import calculate_overall_similarity, calculate_local_similarity, classify_similarity, calculate_target_coverage
+from utils.autocorrect import AutoCorrectConfig, CorrectionEngine
+from utils.autocorrect.ai_engine import configure_ai, process_text_with_ai
+
+API_KEY_FILE = "utils/autocorrect/data/api_key.txt"
+
+def get_saved_apikey():
+    if os.path.exists(API_KEY_FILE):
+        with open(API_KEY_FILE, "r") as f:
+            return f.read().strip()
+    return ""
+
+def save_apikey(key):
+    with open(API_KEY_FILE, "w") as f:
+        f.write(key)
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -20,6 +35,29 @@ st.markdown("""
 .box { padding: 10px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 10px; }
 </style>
 """, unsafe_allow_html=True)
+
+def render_highlighted_text(text: str, segments: list) -> str:
+    if not segments:
+        return text
+        
+    segments.sort(key=lambda x: x[0])
+    merged = [segments[0]]
+    for current in segments[1:]:
+        last = merged[-1]
+        if current[0] <= last[1]:
+            merged[-1] = (last[0], max(last[1], current[1]))
+        else:
+            merged.append(current)
+            
+    last_idx = 0
+    html = ""
+    for start, end in merged:
+        html += text[last_idx:start]
+        html += f"<span class='highlight-high'>{text[start:end]}</span>"
+        last_idx = end
+    html += text[last_idx:]
+    
+    return html.replace("\n", "<br>")
 
 def render_side_by_side(local_results, low_thresh, high_thresh):
     """Render side-by-side local matches in the UI for 1 vs 1 mode."""
@@ -62,15 +100,30 @@ def render_coverage_side_by_side(coverage_results, low_thresh, high_thresh):
             st.markdown("<hr style='margin: 0.5em 0; opacity: 0.2;'>", unsafe_allow_html=True)
 
 # --- App Header ---
-st.title("🔍 Vietnamese Academic Plagiarism Detection Demo")
-st.markdown("A simple tool to detect potential plagiarism using TF-IDF and Cosine Similarity.")
+col_title, col_api = st.columns([3, 1])
+
+with col_title:
+    st.title("🔍 Vietnamese Academic Plagiarism Detection Demo")
+    st.markdown("A simple tool to detect potential plagiarism using TF-IDF and Cosine Similarity.")
+
+with col_api:
+    st.markdown("<br>", unsafe_allow_html=True)
+    with st.expander("🔑 Cấu hình Hệ thống AI", expanded=False):
+        current_key = get_saved_apikey()
+        api_key_input = st.text_input("Gemini API Key", value=current_key, type="password", key="api_key_global")
+        if st.button("Lưu cấu hình"):
+            save_apikey(api_key_input)
+            st.success("Đã ghi nhớ API Key!")
+            
 st.markdown("---")
 
 # --- Sidebar Controls ---
 st.sidebar.header("Cài đặt (Settings)")
-mode = st.sidebar.radio("Chế độ so sánh (Mode)", [
+mode = st.sidebar.radio("Chế độ (Mode)", [
     "So sánh 2 tài liệu (1 vs 1)", 
-    "So sánh nhiều tài liệu (Batch)"
+    "So sánh nhiều tài liệu (Batch)",
+    "So sánh thuật toán (Algorithm Comparison)",
+    "Kiểm tra & Sửa lỗi chính tả (Auto-correct)"
 ])
 
 low_thresh = st.sidebar.slider("Medium Similarity Threshold", min_value=0.1, max_value=0.5, value=0.3, step=0.05)
@@ -78,6 +131,62 @@ high_thresh = st.sidebar.slider("High Similarity Threshold", min_value=0.5, max_
 
 if low_thresh >= high_thresh:
     st.sidebar.error("Medium threshold must be lower than High threshold.")
+
+if mode == "Kiểm tra & Sửa lỗi chính tả (Auto-correct)":
+    st.sidebar.markdown("---")
+    st.sidebar.header("Cấu hình Auto-correct")
+    ac_enabled = st.sidebar.checkbox("Bật Engine", value=True)
+    engine_type = st.sidebar.radio("Bộ Mã Máy Xử lý", ["Từ điển Truyền thống", "AI Siêu Trí Tuệ (Gemini)"])
+    
+    saved_key = get_saved_apikey()
+    if engine_type == "AI Siêu Trí Tuệ (Gemini)":
+        if saved_key:
+            configure_ai(saved_key)
+        else:
+            st.sidebar.warning("Vui lòng thiết lập API Key ở góc trên bên phải màn hình để dùng AI.")
+        
+    ac_mode = st.sidebar.selectbox("Chế độ xử lý", ["autocorrect", "suggest_only", "spellcheck_only"])
+    ac_threshold = st.sidebar.slider("Độ tự tin (Confidence)", 0.5, 1.0, 0.85, 0.05)
+else:
+    ac_enabled = False
+    engine_type = "Từ điển Truyền thống"
+    ac_mode = "autocorrect"
+    ac_threshold = 0.85
+
+@st.cache_resource
+def get_correction_engine(enabled, acmode, threshold):
+    config = AutoCorrectConfig(enabled=enabled, mode=acmode, confidence_threshold=threshold)
+    return CorrectionEngine(config)
+
+engine = get_correction_engine(ac_enabled, ac_mode, ac_threshold)
+
+def apply_autocorrect(text, tag=""):
+    if not ac_enabled:
+        return text, []
+        
+    if engine_type == "AI Siêu Trí Tuệ (Gemini)" and not get_saved_apikey():
+        st.error("Chưa cấu hình API Key ở góc phải. Sẽ giữ nguyên văn bản gốc.")
+        return text, []
+    
+    with st.spinner(f"Đang kiểm tra chính tả {tag}..."):
+        if engine_type == "AI Siêu Trí Tuệ (Gemini)":
+            result = process_text_with_ai(text)
+        else:
+            result = engine.process_text(text)
+            
+        logs = result['logs']
+        applied_count = sum(1 for log in logs if log.get('applied'))
+        if applied_count > 0 or any(l.get('suggestions') for l in logs):
+            st.success(f"Spellcheck: Tự động sửa {applied_count} lỗi trong {tag}.")
+            with st.expander(f"Xem chi tiết lỗi - {tag}", expanded=True):
+                for log in logs:
+                    if log.get('applied'):
+                        st.write(f"🔧 Đã sửa: **{log['word']}** ➡️ **{log['suggested']}** ({log.get('score',0):.2f})")
+                    elif log.get('suggestions'):
+                        st.write(f"💡 Gợi ý cho **{log['word']}**: {', '.join([s['word'] for s in log['suggestions']])}")
+        else:
+            st.info("Tuyệt vời! Không tìm thấy lỗi chính tả nào đáng chú ý.")
+        return result['corrected'], logs
 
 # --- MODE 1: 1 vs 1 ---
 if mode == "So sánh 2 tài liệu (1 vs 1)":
@@ -125,7 +234,7 @@ if mode == "So sánh 2 tài liệu (1 vs 1)":
         st.info("Vui lòng tải lên cả hai tài liệu để bắt đầu.")
 
 # --- MODE 2: Batch (1 vs Many) ---
-else:
+elif mode == "So sánh nhiều tài liệu (Batch)":
     st.markdown("### Chế độ làm việc lô (Batch Mode with Coverage & Top Match)")
     st.write("Kiểm tra 1 tài liệu mục tiêu đối chiếu với nhiều tài liệu tham khảo khác nhau.")
 
@@ -242,3 +351,105 @@ else:
 
     elif target_file or ref_files:
         st.info("Vui lòng tải lên tài liệu đích và danh sách tài liệu tham khảo.")
+
+# --- MODE 3: Algorithm Comparison ---
+elif mode == "So sánh thuật toán (Algorithm Comparison)":
+    st.markdown("### 🧮 Tỉ lệ trùng hợp theo Các thuật toán")
+    st.write("Kiểm thử định lượng tỷ lệ trùng hợp (Overlap Ratio) của 5 thuật toán so khớp chuỗi kinh điển ứng dụng trong NLP.")
+    
+    col_a, col_b = st.columns(2)
+    with col_a:
+        file_a = st.file_uploader("1. Tải lên Văn bản tham chiếu (Text A)", type=['txt', 'docx'], key='algo_a')
+        text_a_input = st.text_area("Hoặc dán thủ công (Text A - Nguồn)", height=150, help="Đóng vai trò là Pattern / Source")
+    with col_b:
+        file_b = st.file_uploader("2. Tải lên Văn bản kiểm tra (Text B)", type=['txt', 'docx'], key='algo_b')
+        text_b_input = st.text_area("Hoặc dán thủ công (Text B - Đích)", height=150, help="Đóng vai trò là Text cần quét")
+        
+    if st.button("🚀 Chạy So sánh", type="primary"):
+        text_a = load_file(file_a) if file_a else text_a_input
+        text_b = load_file(file_b) if file_b else text_b_input
+        
+        if not text_a.strip() or not text_b.strip():
+            st.error("Vui lòng nhập/tải lên cả hai văn bản (chứa ít nhất 1 câu).")
+        else:
+            from utils.algorithms import SimilarityAlgorithmService
+            service = SimilarityAlgorithmService()
+            
+            with st.spinner("Đang chạy và tập hợp song song 5 thuật toán..."):
+                results = service.compare_all(text_a, text_b)
+                
+            data = []
+            chart_data = []
+            for r in results:
+                data.append({
+                    "🚀 Thuật toán": r.algorithm_name,
+                    "🎯 Số Match": r.match_count,
+                    "📏 Size Khớp (char)": r.matched_length,
+                    "🔥 Tỉ lệ Trùng (%)": f"{r.similarity_percent:.1f}%",
+                    "📝 Nguyên lý & Đánh giá": r.notes
+                })
+                chart_data.append({
+                    "Thuật toán": r.algorithm_name,
+                    "Tỉ lệ Trùng hợp (%)": r.similarity_percent
+                })
+                
+            st.markdown("### 📊 Biểu đồ Tương quan Thuật toán")
+            st.write("Mỗi thuật toán đại diện cho một cách đánh giá (Keyword, Sentence, Substring...). Nhìn vào biểu đồ bạn sẽ biết văn bản này chủ yếu giống nhau ở Cấu trúc nào.")
+            
+            import altair as alt
+            df_chart = pd.DataFrame(chart_data)
+            bar_chart = alt.Chart(df_chart).mark_bar().encode(
+                x=alt.X('Thuật toán:N', title='', sort=None),
+                y=alt.Y('Tỉ lệ Trùng hợp (%):Q', title='Tỉ lệ trùng khớp (%)'),
+                color=alt.Color('Thuật toán:N', legend=None),
+                tooltip=['Thuật toán:N', 'Tỉ lệ Trùng hợp (%):Q']
+            ).properties(height=350)
+            st.altair_chart(bar_chart, use_container_width=True)
+            
+            st.dataframe(pd.DataFrame(data), use_container_width=True)
+            
+            st.markdown("---")
+            st.subheader("🖍 Hiển thị Visual Match (Best Coverage)")
+            
+            # Chọn thuật toán cho ra kết quả trùng lắp (match len) cao nhất để highlight UI
+            valid_results = [r for r in results if r.matched_length > 0]
+            if valid_results:
+                best_r = sorted(valid_results, key=lambda x: x.matched_length, reverse=True)[0]
+                st.write(f"Đang minh hoạ highlight từ kết quả phân tích của vòng quét: **{best_r.algorithm_name}**")
+                
+                html = render_highlighted_text(text_b, best_r.matched_segments)
+                st.markdown(f"<div class='box'>{html}</div>", unsafe_allow_html=True)
+            else:
+                st.success("Tuyệt vời! Không phát hiện trùng lặp giữa 2 văn bản này bởi bất kỳ thuật toán nào.")
+
+# --- MODE 4: Auto-correct ---
+elif mode == "Kiểm tra & Sửa lỗi chính tả (Auto-correct)":
+    st.markdown("### 📝 Công cụ Kiểm tra và Tự động sửa lỗi chính tả")
+    st.write("Sử dụng AI và từ điển mở rộng để tự động chuẩn hóa văn bản, đặc biệt hỗ trợ domain y tế.")
+    
+    file_ac = st.file_uploader("Tải lên tài liệu cần kiểm tra (.txt, .docx)", type=['txt', 'docx'], key='file_ac')
+    
+    if file_ac:
+        text_ac = load_file(file_ac)
+        if not text_ac:
+            st.error("Tài liệu bị trống hoặc không đọc được.")
+            st.stop()
+            
+        col_orig, col_corr = st.columns(2)
+        with col_orig:
+            st.subheader("Bản gốc")
+            st.text_area("Original Text", text_ac, height=300, disabled=True)
+            
+        with col_corr:
+            st.subheader("Bản sửa lỗi")
+            corrected_text, logs = apply_autocorrect(text_ac, "Tài liệu upload")
+            st.text_area("Corrected Text", corrected_text, height=300)
+            
+            # Allow user to download corrected version
+            if corrected_text != text_ac:
+                st.download_button(
+                    label="📥 Tải xuống Bản sửa lỗi",
+                    data=corrected_text.encode('utf-8'),
+                    file_name=f"corrected_{file_ac.name}",
+                    mime='text/plain',
+                )

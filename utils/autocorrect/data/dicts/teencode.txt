@@ -1,0 +1,166 @@
+thíc:thích
+hăm:không
+hong:không
+hông:không
+ko:không
+k:không
+cx:cũng
+đc:được
+dc:được
+j:gì
+r:rồi
+vs:với
+ntn:như thế nào
+tn:thế nào
+kb:không biết
+mk:mình
+rùi:rồi
+uk:ừ
+uh:ừ
+ukm:ừ
+thui:thôi
+gòi:rồi
+zậy:vậy
+z:vậy
+lun:luôn
+hok:không
+bik:biết
+bit:biết
+nhìu:nhiều
+rứa:thế
+lun:luôn
+ngta:người ta
+đx:được
+dk:được
+đk:được
+cx:cũng
+nt:nhắn tin
+rep:trả lời
+ib:inbox
+add:thêm bạn
+cmt:bình luận
+tt:tương tác
+đag:đang
+hỉu:hiểu
+nx:nữa
+mún:muốn
+ng:người
+t:tôi
+m:mày
+tr:trời
+trc:trước
+sau:sau
+nv:như vậy
+nvay:như vậy
+nhg:nhưng
+vs:với
+ms:mới
+v:vậy
+bt:biết
+bn:bạn
+tl:trả lời
+sđt:số điện thoại
+h:giờ
+hqua:hôm qua
+hnay:hôm nay
+mai:ngày mai
+bth:bình thường
+cty:công ty
+chx:chưa
+ch:chưa
+nh:nhiều
+kh:không
+kb:khác biệt
+đc:được
+đổi:đổi
+trg:trong
+gd:gia đình
+ck:chồng
+vk:vợ
+ny:người yêu
+ex:người yêu cũ
+bh:bây giờ
+ncl:nói chung là
+ntn:như thế nào
+vl:vãi
+đm:đm
+cl:cl
+éo:không
+đéo:không
+vl:vãi
+vđ:vấn đề
+gv:giáo viên
+hs:học sinh
+sv:sinh viên
+kt:kiểm tra
+bt:bài tập
+sgk:sách giáo khoa
+dh:đại học
+c3:cấp ba
+c2:cấp hai
+c1:cấp một
+hl:học lực
+hk:học kỳ
+nh:năm học
+gđ:giai đoạn
+nn:ngôn ngữ
+mt:máy tính
+tn:tốt nghiệp
+đh:đại học
+cd:cao đẳng
+tc:trung cấp
+tt:trung tâm
+gd:giáo dục
+dt:đào tạo
+gv:giáo viên
+ns:nói
+ns:nói chung
+lun:luôn
+òi:rồi
+nhen:nhé
+nhe:nhé
+nha:nhá
+vãi:rất
+thề:cam đoan
+tks:cảm ơn
+thanks:cảm ơn
+iu:yêu
+yew:yêu
+íu:tiếc
+phốt:scandal
+bốc phốt:vạch trần
+toang:hỏng
+tạch:trượt
+chuẩn:đúng
+đỉnh:tuyệt vời
+phèn:kém sang
+trẩu:trẻ trâu
+ảo:không thật
+chóp:đỉnh
+gét:ghét
+thik:thích
+đroi:đúng rồi
+kô:không
+hum:không
+kém:kém
+gớm:ghê
+hâm:bị điên
+bcuoi:buồn cười
+cute:dễ thương
+pro:giỏi
+gà:kém
+lỏ:cùi bắp
+sos:cứu
+chê:không thích
+ok:đồng ý
+oki:đồng ý
+oke:đồng ý
+okie:đồng ý
+chời:trời
+chời ơi:trời ơi
+oimeoi:ôi mẹ ơi
+chu choa:mẹ ơi
+ui:ôi
+ưi:ơi
+á:à
+há:hả
