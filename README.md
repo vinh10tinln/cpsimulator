@@ -1,54 +1,60 @@
-# Anti-Plagiarism Demo
+# Anti-Plagiarism & Multilingual Auto-Correct System
 
-This is a simple student demonstration project for a 3-person, 3-week computing/informatics assignment focused on academic plagiarism detection in Vietnamese.
-
-## Project Scope
-This project uses **TF-IDF Vectorization** and **Cosine Similarity** to compare uploaded documents. 
-It supports advanced batch processing to find plagiarism signatures across an entire dataset without double counting overlaps!
+This is a comprehensive demonstration project for academic plagiarism detection and multilingual auto-correction. It features dual capabilities: finding similarities across multiple documents to detect plagiarism strings, and an advanced AI-powered engine for spelling correction.
 
 ## Features
-- **Upload target & reference documents** (`.txt` and `.docx` supported).
-- **Two Flexible Modes**: 
-  1. `1 vs 1`: Compare a target document against a single reference document.
-  2. `Batch (1 vs Many)`: Upload one target document and multiple reference documents at once.
-- Advanced metric calculations including **Top Match** and true **Coverage**.
 
-## Batch Mode Scoring System
-- **Overall Similarity (Per File)**: The direct mathematical similarity between the entire Target File and one Reference File.
-- **Top Match**: The single Reference File that holds the highest Overall Similarity score with the Target File.
-- **Coverage**: The true proportion of the Target File that contains suspicious (plagiarized) text. This algorithm scans the union of all matches, guaranteeing that if multiple reference files share the same plagiarized sentence, that sentence is still only counted *once* in the final coverage percentage.
-- **Final Risk**: A synthesized conclusion grading the Target File as *High, Medium, Low, or Minimal* risk, heavily weighted by **Coverage** (scale) but also considering **Top Match** (intensity).
+1. **Plagiarism Detection (Batch Processing)**:
+   - **TF-IDF Vectorization** and **Cosine Similarity** to compare uploaded documents.
+   - **Batch Mode (1 vs Many)**: Compare a target document against multiple reference files simultaneously.
+   - **Intelligent Coverage**: Analyzes similarities at the segment level to avoid double-counting text that appears in multiple reference files.
+   - **Multiple String Matchers**: Includes Aho-Corasick, KMP, Trie, Hash, and Z-function matchers for versatile and robust string comparison logic.
+   - **Final Risk Assessment**: Generates a unified plagiarism risk score (Low, Medium, High).
+
+2. **Multilingual Auto-Correct Engine**:
+   - Dedicated UI mode for spell checking and auto-correction.
+   - Supported languages: English and Vietnamese (includes teencode normalization).
+   - Domain-specific whitelist functionality.
+   - **AI-Powered Context Engine**: Integrated with Google Gemini to handle complex language nuances and context-dependent spelling errors.
 
 ## Project Structure
 - `app.py`: The Main Streamlit interface containing both modes.
-- `utils/`: Core Logic modules (`preprocess.py`, `similarity.py`, `file_loader.py`).
-- `sample_data/`: Includes robust sample files designed to test logic limits (e.g., completely unrelated text vs highly plagiarized vs medium rewritten text).
-- `requirements.txt`: Python package requirements.
+- `utils/`: Core Logic modules.
+   - `utils/algorithms/`: Specialized string matching algorithms.
+   - `utils/autocorrect/`: Spell check validation, dictionaries, and AI integration via Gemini.
+- `sample_data/`: Sample text files designed to test the application's capabilities.
+- `requirements.txt`: Python dependencies.
 
-## How to Run & Demo in Class
-1. Open a terminal and navigate to the project directory:
+## Installation & Setup
+
+1. Clone this repository:
    ```bash
-   cd anti_plagiarism_demo
+   git clone https://github.com/emton6969/cp-simulator.git
+   cd cp-simulator
    ```
-2. Activate your virtual environment and install dependencies:
+
+2. Create and activate a python virtual environment:
    ```bash
    python3 -m venv venv
-   source venv/bin/activate
+   source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+   ```
+
+3. Install the required dependencies:
+   ```bash
    pip install -r requirements.txt
    ```
-3. Run the Streamlit application:
-   ```bash
-   streamlit run app.py
-   ```
 
-**Demoing the Logic**:
-1. Select "So sánh nhiều tài liệu (Batch)" from the sidebar.
-2. Upload `doc1_original.txt` as your Target Document.
-3. Upload all four reference files (`batch_ref_1...` through `batch_ref_4...`) into the "References" slot simultaneously.
-4. Explain the **Final Risk Assessment** dashboard. Point to the **Coverage** percentage and explain how it prevents double-counting overlaps. 
-5. Under **"Chi tiết Độ Bao Phủ"**, unfold the accordion. It will show sentence-by-sentence what part of the Target was matched, and *which* reference file had the absolute highest similarity for that specific sentence!
+## Configuration
 
-## Limitations
-1. **Sentence Fragmentation**: Splitting by standard delimiters might occasionally fragment acronyms if not heavily pre-processed.
-2. **Advanced Paraphrasing**: Since TF-IDF correlates exact word frequencies, the application may fail to identify highly "spun" content where complex synonyms fully overwrite original words.
-3. **No External Crawling**: This system strictly tests locally provided documents against each other. It does not scrape the internet for copied text.
+If you want to use the AI autocorrect feature, you will need a Google Gemini API key.
+You can input your key directly into the app's sidebar during runtime, or set it securely in the environment.
+
+## Running the App
+
+To launch the Streamlit frontend, simply run:
+
+```bash
+streamlit run app.py
+```
+
+Open the local URL generated (usually `http://localhost:8501`) in your browser. You can navigate between the "Plagiarism Detection" (So sánh Batch) and "Auto-Correct" (Sửa lỗi chính tả) tabs in the sidebar.
