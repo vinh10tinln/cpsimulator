@@ -6,3 +6,5 @@ __pycache__/
 # Autocorrect Cache & Sensitive Data
 utils/autocorrect/data/cache/
 utils/autocorrect/data/api_key.txt
+
+venv311/

@@ -126,11 +126,14 @@ mode = st.sidebar.radio("Chế độ (Mode)", [
     "Kiểm tra & Sửa lỗi chính tả (Auto-correct)"
 ])
 
-low_thresh = st.sidebar.slider("Medium Similarity Threshold", min_value=0.1, max_value=0.5, value=0.3, step=0.05)
-high_thresh = st.sidebar.slider("High Similarity Threshold", min_value=0.5, max_value=0.9, value=0.7, step=0.05)
+low_thresh_pct = st.sidebar.slider("Ngưỡng Cảnh báo Trung bình", min_value=10, max_value=50, value=30, step=5, format="%d%%")
+high_thresh_pct = st.sidebar.slider("Ngưỡng Cảnh báo Cao", min_value=50, max_value=90, value=70, step=5, format="%d%%")
+
+low_thresh = low_thresh_pct / 100.0
+high_thresh = high_thresh_pct / 100.0
 
 if low_thresh >= high_thresh:
-    st.sidebar.error("Medium threshold must be lower than High threshold.")
+    st.sidebar.error("Ngưỡng Trung bình phải nhỏ hơn Ngưỡng Cao.")
 
 if mode == "Kiểm tra & Sửa lỗi chính tả (Auto-correct)":
     st.sidebar.markdown("---")
@@ -146,7 +149,8 @@ if mode == "Kiểm tra & Sửa lỗi chính tả (Auto-correct)":
             st.sidebar.warning("Vui lòng thiết lập API Key ở góc trên bên phải màn hình để dùng AI.")
         
     ac_mode = st.sidebar.selectbox("Chế độ xử lý", ["autocorrect", "suggest_only", "spellcheck_only"])
-    ac_threshold = st.sidebar.slider("Độ tự tin (Confidence)", 0.5, 1.0, 0.85, 0.05)
+    ac_threshold_pct = st.sidebar.slider("Độ tự tin (Confidence)", 50, 100, 85, 5, format="%d%%")
+    ac_threshold = ac_threshold_pct / 100.0
 else:
     ac_enabled = False
     engine_type = "Từ điển Truyền thống"
